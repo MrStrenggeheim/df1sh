@@ -1,0 +1,25 @@
+Index,StartDate,EndDate,Country,City,Circuit,HasSprint
+0,2024-02-29,2024-03-02,Bahrain,Sakhir,Bahrain International Circuit,False
+1,2024-03-07,2024-03-09,Saudi Arabia,Jeddah,Jeddah Corniche Circuit,False
+2,2024-03-22,2024-03-24,Australia,Melbourne,Albert Park Grand Prix Circuit,False
+3,2024-04-05,2024-04-07,Japan,Suzuka,Suzuka Circuit,False
+4,2024-04-19,2024-04-21,China,Shanghai,Shanghai International Circuit,True
+5,2024-05-03,2024-05-05,Miami,Miami,Miami International Autodrome,True
+6,2024-05-17,2024-05-19,Emilia-Romagna,Imola,Autodromo Internazionale Enzo e Dino Ferrari,False
+7,2024-05-24,2024-05-26,Monaco,Monaco,Circuit de Monaco,False
+8,2024-06-07,2024-06-09,Canada,Montréal,Circuit Gilles-Villeneuve,False
+9,2024-06-21,2024-06-23,Spain,Barcelona,Circuit de Barcelona-Catalunya,False
+10,2024-06-28,2024-06-30,Austria,Spielberg,Red Bull Ring,True
+11,2024-07-05,2024-07-07,Great Britain,Silverstone,Silverstone Circuit,False
+12,2024-07-19,2024-07-21,Hungary,Budapest,Hungaroring,False
+13,2024-07-26,2024-07-28,Belgium,Spa-Francorchamps,Circuit de Spa-Francorchamps,False
+14,2024-08-23,2024-08-25,Netherlands,Zandvoort,Circuit Zandvoort,False
+15,2024-08-30,2024-09-01,Italy,Monza,Autodromo Nazionale Monza,False
+16,2024-09-13,2024-09-15,Azerbaijan,Baku,Baku City Circuit,False
+17,2024-09-20,2024-09-22,Singapore,Marina Bay,Marina Bay Street Circuit,False
+18,2024-10-18,2024-10-20,United States,Austin,Circuit of The Americas,True
+19,2024-10-25,2024-10-27,Mexico,Mexico City,Autódromo Hermanos Rodríguez,False
+20,2024-11-01,2024-11-03,Brazil,São Paulo,Autódromo José Carlos Pace,True
+21,2024-11-21,2024-11-23,Las Vegas,Las Vegas,Las Vegas Strip Circuit,False
+22,2024-11-29,2024-12-01,Qatar,Lusail,Lusail International Circuit,True
+23,2024-12-06,2024-12-08,Abu Dhabi,Yas Island,Yas Marina Circuit,False

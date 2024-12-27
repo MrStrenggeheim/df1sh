@@ -1,0 +1,31 @@
+# [General]
+[server]
+headless = true                  # Run in headless mode (default for deployment)
+port = 8501                      # Default port for the Streamlit server
+enableCORS = false               # Disable CORS protection for APIs
+enableXsrfProtection = false     # Disable CSRF protection (use carefully in production)
+maxUploadSize = 200              # Max upload size in MB
+baseUrlPath = ""                 # Base URL path for Streamlit if behind a proxy
+runOnSave = false                # Automatically rerun app when Python file is modified
+
+[theme]
+base = "light"                   # Options: "light" or "dark"
+primaryColor = "#4CAF50"         # Custom primary color (green)
+backgroundColor = "#FFFFFF"      # Background color for the app
+secondaryBackgroundColor = "#F0F2F6" # Sidebar background color
+textColor = "#262730"            # Default text color
+font = "sans serif"              # Font type (options: "sans serif" or "monospace")
+
+[client]
+toolbarMode = "minimal"          # Options: "minimal" or "auto"
+showErrorDetails = true          # Display full error messages in the app
+
+[logger]
+level = "info"                   # Logging level (options: "error", "warning", "info", "debug")
+messageFormat = "%(asctime)s %(message)s"
+
+[mapbox]
+token = ""                       # Optional Mapbox token for map visualization
+
+[deprecation]
+showfileUploaderEncoding = false # Avoid warning for file uploader encoding
