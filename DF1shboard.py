@@ -46,6 +46,26 @@ def plot_points_over_time(
         height=800,
         xaxis_title=None,
     )
+
+    # legent max width
+    # fig.update_layout(
+    #     legend=dict(
+    #         title=None,
+    #         orientation="v",
+    #         yanchor="bottom",
+    #         xanchor="right",
+    #         x=1,
+    #         y=1,
+    #         borderwidth=0,
+    #         itemwidth=30,
+    #     )
+    # )
+    fig.for_each_trace(
+        lambda trace: trace.update(
+            name=trace.name[:15] + "..." if len(trace.name) > 15 else trace.name
+        )
+    )
+
     return fig
 
 
@@ -115,21 +135,24 @@ def main():
 
     st.title("DF1shboard")
 
-    f = plot_points_over_time(
+    cols = st.columns(2)
+
+    driver_point_over_time_graph = plot_points_over_time(
         results_df,
         entity="DriverName",
         color_map=driver_to_color,
         line_dash_sequence=["solid", "dot"],
     )
-    st.plotly_chart(f)
 
-    f = plot_points_over_time(
+    team_points_over_time_grpah = plot_points_over_time(
         results_df,
         entity="TeamName",
         color_map=team_to_color,
         line_dash_sequence=["solid"],
     )
-    st.plotly_chart(f)
+
+    cols[0].plotly_chart(driver_point_over_time_graph)
+    cols[1].plotly_chart(team_points_over_time_grpah)
 
     st.info("More features coming soon!")
 
