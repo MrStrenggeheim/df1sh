@@ -8,6 +8,47 @@ import utils.style as style
 DATA_FOLDER = "./data"
 
 
+def get_points_over_time(results_df, entity="DriverName"):
+    if entity == "DriverName":
+        summed_df = results_df.groupby(
+            ["Country", "EndDate", "TeamName", entity]
+        ).sum()["Points"]
+    if entity == "TeamName":
+        summed_df = results_df.groupby(["Country", "EndDate", entity]).sum()["Points"]
+    summed_df = summed_df.reset_index().sort_values(
+        by=["EndDate", "TeamName", entity], ascending=[True, True, True]
+    )
+    summed_df["Points"] = summed_df["Points"].astype(int)
+    summed_df["EndDate"] = pd.to_datetime(summed_df["EndDate"])
+
+    piv_table = summed_df.pivot_table(["Points"], ["Country"], [entity], sort=False)
+    piv_table = piv_table.fillna(0).cumsum(axis=0)
+    piv_table = piv_table.stack(future_stack=True).reset_index()
+    return piv_table
+
+
+def plot_points_over_time(
+    results_df, entity="DriverName", color_map=None, line_dash_sequence=None
+):
+    piv_table = get_points_over_time(results_df, entity=entity)
+    fig = px.line(
+        piv_table,
+        x="Country",
+        y="Points",
+        line_group=entity,
+        color=entity,
+        color_discrete_map=color_map,
+        line_dash=entity,
+        line_dash_sequence=line_dash_sequence,
+        title="Points over time",
+    )
+    fig.update_layout(
+        height=800,
+        xaxis_title=None,
+    )
+    return fig
+
+
 def main():
     # Load the races from the CSV file
     races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
@@ -16,12 +57,13 @@ def main():
 
     race_names = races_df["Country"].tolist()
     results_df = pd.DataFrame()
-    # fastest_file = f"{RESULT_FOLDER}/fastest_laps.csv"
+    # fastest_file = f"{DATA_FOLDER}/races/fastest_laps.csv"
     # try:
-    #     fastest_df = pd.read_csv(fastest_file, index_col=0)
+    #     fastest_df = pd.read_csv(
+    #         fastest_file, index_col=0, dtype=str, keep_default_na=False
+    #     )
     # except FileNotFoundError:
-    #     st.warning(f"Fastest laps not found")
-    #     st.stop()
+    #     fastest_df = pd.DataFrame()
 
     # to get colormap: match driver with team wehere color is a column
     team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
@@ -46,51 +88,48 @@ def main():
         df["EndDate"] = end_date
         results_df = pd.concat([results_df, df], axis=0) if not results_df.empty else df
 
+    # add points of fastest laps
+    # for country, driver in fastest_df.iterrows():
+    #     print(country, driver)
+    #     results_df = pd.concat(
+    #         [
+    #             results_df,
+    #             pd.DataFrame(
+    #                 {
+    #                     "Country": country,
+    #                     "EndDate": races_df[races_df["Country"] == country][
+    #                         "EndDate"
+    #                     ].values[0],
+    #                     "Position": 0,
+    #                     "DriverName": driver["DriverName"],
+    #                     "TeamName": results_df[
+    #                         results_df["DriverName"] == driver["DriverName"]
+    #                     ]["TeamName"].values[0],
+    #                     "Points": 1,
+    #                 }
+    #             ),
+    #         ],
+    #         axis=0,
+    #         ignore_index=True,
+    #     )
+
     st.title("DF1shboard")
-    results_df = results_df.groupby(
-        ["Country", "EndDate", "TeamName", "DriverName"]
-    ).sum()["Points"]
-    results_df = results_df.reset_index()
-    results_df = results_df.sort_values(
-        by=["EndDate", "TeamName", "DriverName"], ascending=[True, True, True]
-    )
-    # st.dataframe(results_df)
 
-    # TODO multiselect for driver
-
-    # race_interval = st.slider(
-    #     "Races to include", value=(1, 24), min_value=1, max_value=24
-    # )
-
-    # accumulate points
-    results_df["Points"] = results_df["Points"].astype(int)
-    results_df["EndDate"] = pd.to_datetime(results_df["EndDate"])
-    results_df["PointsAcc"] = results_df.groupby(["DriverName"])["Points"].cumsum()
-
-    fig = px.line(
+    f = plot_points_over_time(
         results_df,
-        x="Country",
-        y="PointsAcc",
-        line_group="DriverName",
-        color="DriverName",
-        color_discrete_map=driver_to_color,
-        line_dash="DriverName",
+        entity="DriverName",
+        color_map=driver_to_color,
         line_dash_sequence=["solid", "dot"],
-        # markers=True,
-        title="Points over time",
-        # line_shape="spline",
-        # labels={"PointsAcc": "Points", "Country": ""},
     )
-    fig.update_layout(
-        height=800,
-        xaxis_title=None,
-        xaxis=dict(
-            type="category",
-            categoryorder="array",
-            categoryarray=results_df["Country"].unique(),
-        ),
+    st.plotly_chart(f)
+
+    f = plot_points_over_time(
+        results_df,
+        entity="TeamName",
+        color_map=team_to_color,
+        line_dash_sequence=["solid"],
     )
-    st.plotly_chart(fig)
+    st.plotly_chart(f)
 
     st.info("More features coming soon!")
 

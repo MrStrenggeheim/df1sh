@@ -144,7 +144,7 @@ def refactor_df(df: pd.DataFrame):
 
     df = df.rename(columns=COL_NAME_MAP)
     df.insert(2, "TeamName", None)
-    drivers_df = pd.read_csv("./drivers.csv")
+    drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
     df = update_teams(df, drivers_df)
 
     return df
