@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import streamlit as st
 import utils.data as data
@@ -12,9 +14,23 @@ def main():
 
     data_editor_nr = st.session_state.setdefault("data_editor_nr", 0)
     if "races_df" not in st.session_state:
-        st.session_state.races_df = pd.read_csv(
-            DATA_FOLDER + "/races.csv", parse_dates=["StartDate", "EndDate"]
-        )
+        if os.path.exists(DATA_FOLDER + "/races.csv"):
+            st.session_state.races_df = pd.read_csv(
+                DATA_FOLDER + "/races.csv", parse_dates=["StartDate", "EndDate"]
+            )
+        else:
+            os.makedirs(DATA_FOLDER, exist_ok=True)
+            st.session_state.races_df = pd.DataFrame(
+                columns=[
+                    "Index",
+                    "StartDate",
+                    "EndDate",
+                    "Country",
+                    "City",
+                    "Circuit",
+                    "HasSprint",
+                ]
+            )
 
     st.header("Edit Races")
     races_df = st.data_editor(
@@ -44,7 +60,7 @@ def main():
     if save_button:
         races_df.to_csv(DATA_FOLDER + "/races.csv", index=False)
         st.session_state.races_df = races_df
-        st.rerun()
+        st.success("Data saved.")
     if fetch_button:
         with st.spinner("Fetching data..."):
             st.session_state.races_df = data.get_races()

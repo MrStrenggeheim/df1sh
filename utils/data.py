@@ -10,7 +10,9 @@ from bs4 import BeautifulSoup
 
 # URL for the F1 results page
 base_url = "https://www.formula1.com"
-results = "https://www.formula1.com/en/results/2024/races"
+results_url = "https://www.formula1.com/en/results/2024/races"
+drivers_url = "https://www.formula1.com/en/drivers"
+team_url = "https://www.formula1.com/en/teams"
 
 DATA_FOLDER = "./data"
 
@@ -69,7 +71,7 @@ def get_sprint(soup, only_check=False):
 
 def get_locations():
     # get all location names and location links from the main page
-    soup = get_soup(results)
+    soup = get_soup(results_url)
     # get all links that contain race-result
     links = soup.find_all("a", href=True, class_="block")
     # get all location names
@@ -166,3 +168,40 @@ def save_results_to_csv():
         if sprint is not None:
             sprint = refactor_df(sprint)
             sprint.to_csv(f"{DATA_FOLDER}/races/sprint_{location}.csv", index=False)
+
+
+def get_drivers():
+    drivers = []
+    soup = get_soup(drivers_url)
+    links = soup.find_all("a", href=True, class_="group")
+    links = [link for link in links if "drivers/" in link["href"]]
+    for driver in links:
+        first_name = driver.find_all("p")[3].get_text(strip=True)
+        last_name = driver.find_all("p")[4].get_text(strip=True)
+        team_name = driver.find_all("p")[5].get_text(strip=True)
+        drivers.append(
+            {
+                "DriverName": f"{first_name} {last_name}",
+                "TeamName": team_name,
+            }
+        )
+
+    drivers_df = pd.DataFrame(drivers)
+    return drivers_df
+
+
+def get_teams():
+    teams = []
+    soup = get_soup(team_url)
+    links = soup.find_all("a", href=True, class_="group")
+    for link in links:
+        name = link.span.get_text(strip=True)
+        color = [
+            "#" + color[-6:]
+            for color in link.div.attrs["class"]
+            if color.startswith("text")
+        ][0]
+        teams.append({"TeamName": name, "Color": color})
+
+    teams_df = pd.DataFrame(teams)
+    return teams_df

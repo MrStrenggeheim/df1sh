@@ -28,7 +28,7 @@ def get_points_over_time(results_df, entity="DriverName"):
 
 
 def plot_points_over_time(
-    results_df, entity="DriverName", color_map=None, line_dash_sequence=None
+    results_df, entity="DriverName", color_map=None, line_dash_sequence=None, **kwargs
 ):
     piv_table = get_points_over_time(results_df, entity=entity)
     fig = px.line(
@@ -40,7 +40,7 @@ def plot_points_over_time(
         color_discrete_map=color_map,
         line_dash=entity,
         line_dash_sequence=line_dash_sequence,
-        title="Points over time",
+        **kwargs,
     )
     fig.update_layout(
         height=800,
@@ -71,10 +71,13 @@ def plot_points_over_time(
 
 def main():
     # Load the races from the CSV file
-    races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
-    drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
-    teams_df = pd.read_csv(DATA_FOLDER + "/teams.csv")
-
+    try:
+        races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
+        drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
+        teams_df = pd.read_csv(DATA_FOLDER + "/teams.csv")
+    except FileNotFoundError:
+        st.warning("Data not found. Please configure the data in apropiate tabs.")
+        st.stop()
     race_names = races_df["Country"].tolist()
     results_df = pd.DataFrame()
     # fastest_file = f"{DATA_FOLDER}/races/fastest_laps.csv"
@@ -142,6 +145,7 @@ def main():
         entity="DriverName",
         color_map=driver_to_color,
         line_dash_sequence=["solid", "dot"],
+        title="Driver Points Over Time",
     )
 
     team_points_over_time_grpah = plot_points_over_time(
@@ -149,6 +153,7 @@ def main():
         entity="TeamName",
         color_map=team_to_color,
         line_dash_sequence=["solid"],
+        title="Team Points Over Time",
     )
 
     cols[0].plotly_chart(driver_point_over_time_graph)

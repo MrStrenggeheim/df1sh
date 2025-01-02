@@ -30,10 +30,13 @@ FASTEST_DEFAULT = pd.DataFrame(columns=["DriverName"], index=[0])
 
 def main():
     # Load the races from the CSV file
-    races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
-    drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
-    teams_df = pd.read_csv(DATA_FOLDER + "/teams.csv")
-
+    try:
+        races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
+        drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
+        teams_df = pd.read_csv(DATA_FOLDER + "/teams.csv")
+    except FileNotFoundError:
+        st.warning("Data not found. Please configure the data in apropiate tabs.")
+        st.stop()
     # Create a list of race names
     race_names = races_df["Country"].tolist()
 
@@ -107,6 +110,7 @@ def main():
                 "TeamName",
                 options=teams_df["TeamName"].tolist(),
                 required=False,
+                help="Leave empty to auto-fill with default team",
             ),
             "Points": st.column_config.NumberColumn(
                 "Points",
@@ -159,6 +163,7 @@ def main():
                     "TeamName",
                     options=teams_df["TeamName"].tolist(),
                     required=False,
+                    help="Leave empty to auto-fill with default team",
                 ),
                 "Points": st.column_config.NumberColumn(
                     "Points", required=True, disabled=True, width="small"
