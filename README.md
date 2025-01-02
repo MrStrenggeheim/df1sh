@@ -1,6 +1,8 @@
 # df1sh
 A simple dashboard to follow the formula 1 scores.
 
+![DF1shboard](assets/showcase.png)
+
 ## Usage
 
 To run the DF1shboard, follow these steps:
