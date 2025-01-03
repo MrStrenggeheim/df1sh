@@ -26,6 +26,45 @@ COL_NAME_MAP = {
     "Pts": "Points",
 }
 
+RACES_DTYPES = {
+    "Index": int,
+    "StartDate": str,
+    "EndDate": str,
+    "Country": str,
+    "City": str,
+    "Circuit": str,
+    "HasSprint": bool,
+}
+
+DRIVERS_DTYPES = {
+    "DriverName": str,
+    "TeamName": str,
+}
+
+TEAMS_DTYPES = {
+    "TeamName": str,
+    "Color": str,
+}
+
+RACE_POS = 10
+RACE_DEFAULT = pd.DataFrame(
+    {
+        "Position": list(range(1, RACE_POS + 1)),
+        "DriverName": [None] * RACE_POS,
+        "TeamName": [None] * RACE_POS,
+        "Points": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+    }
+)
+SPRINT_POS = 8
+SPRINT_DEFAULT = pd.DataFrame(
+    {
+        "Position": list(range(1, SPRINT_POS + 1)),
+        "DriverName": [None] * SPRINT_POS,
+        "TeamName": [None] * SPRINT_POS,
+        "Points": [8, 7, 6, 5, 4, 3, 2, 1],
+    }
+)
+
 
 def update_teams(df, drivers_df):
     """update column TeamName in df based on the column DriverName-TeamName pair in drivers_df"""

@@ -7,26 +7,6 @@ import utils.style as style
 
 DATA_FOLDER = "./data"
 
-RACE_POS = 10
-RACE_DEFAULT = pd.DataFrame(
-    {
-        "Position": list(range(1, RACE_POS + 1)),
-        "DriverName": [None] * RACE_POS,
-        "TeamName": [None] * RACE_POS,
-        "Points": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
-    }
-)
-SPRINT_POS = 8
-SPRINT_DEFAULT = pd.DataFrame(
-    {
-        "Position": list(range(1, SPRINT_POS + 1)),
-        "DriverName": [None] * SPRINT_POS,
-        "TeamName": [None] * SPRINT_POS,
-        "Points": [8, 7, 6, 5, 4, 3, 2, 1],
-    }
-)
-FASTEST_DEFAULT = pd.DataFrame(columns=["DriverName"], index=[0])
-
 
 def main():
     # Load the races from the CSV file
@@ -79,11 +59,11 @@ def main():
             f"{DATA_FOLDER}/races/race_{race_name}.csv",
         )
     else:
-        race_df = RACE_DEFAULT
+        race_df = data.RACE_DEFAULT
     if os.path.exists(sprint_file):
         sprint_df = pd.read_csv(sprint_file)
     else:
-        sprint_df = SPRINT_DEFAULT
+        sprint_df = data.SPRINT_DEFAULT
     # if os.path.exists(fastest_file):
     #     fastest_df = pd.read_csv(
     #         fastest_file, index_col=0, dtype=str, keep_default_na=False
@@ -94,7 +74,7 @@ def main():
     st.header(f"Results for {race_name}")
     race_df_edit = st.data_editor(
         race_df,
-        num_rows=RACE_POS,
+        num_rows=data.RACE_POS,
         column_config={
             # driver is a selectbox of drivers_df["Driver"].tolist()
             "Position": st.column_config.NumberColumn(
@@ -149,7 +129,7 @@ def main():
         st.header(f"Sprint")
         sprint_df_edit = st.data_editor(
             sprint_df,
-            num_rows=SPRINT_POS,
+            num_rows=data.SPRINT_POS,
             column_config={
                 "Position": st.column_config.NumberColumn(
                     "Position", required=True, disabled=True, width="small"
