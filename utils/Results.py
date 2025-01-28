@@ -8,7 +8,8 @@ import utils.style as style
 DATA_FOLDER = "./data"
 
 
-def main():
+def main(data_folder):
+    DATA_FOLDER = data_folder
     # Load the races from the CSV file
     try:
         races_df = pd.read_csv(DATA_FOLDER + "/races.csv")

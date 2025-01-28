@@ -8,7 +8,8 @@ import utils.style as style
 DATA_FOLDER = "./data"
 
 
-def main():
+def main(data_folder):
+    DATA_FOLDER = data_folder
 
     st.title("Race Data Configuration")
 
@@ -48,14 +49,14 @@ def main():
                 "EndDate", required=True, format="YYYY-MM-DD"
             ),
         },
-        key=f"data_editor_{data_editor_nr}",
+        key=f"races_editor_{data_editor_nr}",
     )
 
     col1, col2, _ = st.columns([1, 1, 1])
     with col1:
-        save_button = st.button("Save to file")
+        save_button = st.button("Save Races to file")
     with col2:
-        fetch_button = st.button("Fetch from API")
+        fetch_button = st.button("Fetch Races from API")
 
     if save_button:
         races_df.to_csv(DATA_FOLDER + "/races.csv", index=False)

@@ -7,7 +7,8 @@ from utils import data, style
 DATA_FOLDER = "./data"
 
 
-def main():
+def main(data_folder):
+    DATA_FOLDER = data_folder
     st.title("Driver Data Configuration")
 
     data_editor_nr = st.session_state.setdefault("data_editor_nr", 0)
@@ -34,14 +35,14 @@ def main():
                 "TeamName", options=df_teams["TeamName"].tolist(), required=True
             ),
         },
-        key=f"data_editor_{data_editor_nr}",
+        key=f"driver_editor_{data_editor_nr}",
     )
 
     col1, col2, _ = st.columns([1, 1, 1])
     with col1:
-        save_button = st.button("Save to file")
+        save_button = st.button("Save Drivers to file")
     with col2:
-        fetch_button = st.button("Fetch from API")
+        fetch_button = st.button("Fetch Drivers from API")
 
     if save_button:
         df_drivers.to_csv(DATA_FOLDER + "/drivers.csv", index=False)

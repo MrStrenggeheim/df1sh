@@ -1,5 +1,40 @@
 import streamlit as st
 
+remove_streamlit_style = """
+div[data-testid="stStatusWidget"] {
+    visibility: hidden;
+    height: 0%;
+    position: fixed;
+}
+
+#stDecoration {
+    opacity: 0;
+}
+section[data-testid="stSidebar"] {
+    margin-top: -2px;
+    padding-top: 2px;
+}
+"""
+
+remove_deploy_button = """
+.stAppDeployButton {
+    visibility: hidden;
+}
+"""
+
+remove_dot_menu = """
+äMainMenu {
+    visibility: hidden;
+}
+"""
+
+remove_top_margin = """
+#root > dif_nth-child(1) > div > div > div > div > section > div {
+    padding-top: 0;
+}
+"""
+
+
 CUSTOM_CSS = """
 <style>
     .message-p {

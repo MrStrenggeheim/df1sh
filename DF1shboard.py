@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from sklearn import svm
-from utils import data, style
+from utils import data, func, style
 
 DATA_FOLDER = "./data"
 
@@ -54,6 +54,9 @@ def plot_points_over_time(
 
 
 def main():
+    # title
+    selected_season = func.display_header("DF1shboard")
+
     # Load the races from the CSV file
     try:
         races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
@@ -97,7 +100,6 @@ def main():
     )
 
     # START ############################################################
-    st.title("DF1shboard")
     today = pd.to_datetime("today").date()
     upcoming_races = races_df[races_df["StartDate"] > today][["Country", "StartDate"]]
     if upcoming_races.empty:

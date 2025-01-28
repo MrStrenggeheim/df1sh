@@ -191,8 +191,8 @@ def refactor_df(df: pd.DataFrame):
     return df
 
 
-def save_results_to_csv():
-    os.makedirs(DATA_FOLDER + "/races", exist_ok=True)
+def save_results_to_csv(data_folder=DATA_FOLDER):
+    os.makedirs(data_folder + "/races", exist_ok=True)
     for location, info in get_locations().items():
         link = info["link"]
 

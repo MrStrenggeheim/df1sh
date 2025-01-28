@@ -7,7 +7,8 @@ from utils import data, style
 DATA_FOLDER = "./data"
 
 
-def main():
+def main(data_folder):
+    DATA_FOLDER = data_folder
     st.title("Team Data Configuration")
     os.makedirs(DATA_FOLDER, exist_ok=True)
 
@@ -23,7 +24,7 @@ def main():
         st.session_state.teams_df,
         num_rows="dynamic",
         use_container_width=True,
-        key=f"data_editor_{data_editor_nr}",
+        key=f"teams_editor_{data_editor_nr}",
     )
 
     col1, col2, _ = st.columns([1, 1, 1])
