@@ -1,11 +1,38 @@
 import os
+import shutil
 
 import streamlit as st
+
+DATA_FOLDER = "./data"
 
 
 def submit():
     st.session_state.current_season = st.session_state.new_season_input
     st.session_state.new_season_input = ""
+
+
+# Utility Functions
+def list_seasons():
+    """List all season folders in the base directory."""
+    return [
+        folder
+        for folder in os.listdir(DATA_FOLDER)
+        if os.path.isdir(os.path.join(DATA_FOLDER, folder))
+    ][::-1]
+
+
+def create_season(name):
+    """Create a new season folder."""
+    os.makedirs(os.path.join(DATA_FOLDER, name), exist_ok=True)
+
+
+def delete_season(name):
+    """Delete an existing season folder."""
+    shutil.rmtree(os.path.join(DATA_FOLDER, name))
+
+
+def refresh_seasons():
+    st.session_state.seasons = list_seasons()
 
 
 @st.fragment

@@ -8,8 +8,10 @@ import utils.style as style
 DATA_FOLDER = "./data"
 
 
-def main(data_folder):
+def main(data_folder, selected_season):
     DATA_FOLDER = data_folder
+    # Create a Streamlit app with sub-tabs for each race
+    st.title(f"Race Results - {selected_season}")
     # Load the races from the CSV file
     try:
         races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
@@ -23,9 +25,6 @@ def main(data_folder):
 
     # folder
     os.makedirs(DATA_FOLDER + "/races", exist_ok=True)
-
-    # Create a Streamlit app with sub-tabs for each race
-    st.title("Race Results")
 
     cols = st.columns([12, 2])
     with cols[0]:
@@ -44,7 +43,7 @@ def main(data_folder):
             )
             if st.button("Do it!"):
                 with st.spinner("Fetching Results..."):
-                    data.save_results_to_csv()
+                    data.save_results_to_csv(datafolder=DATA_FOLDER)
                     st.rerun()
 
     if race_name is None:
@@ -102,7 +101,7 @@ def main(data_folder):
             ),
         },
         hide_index=True,
-        key=f"race_{race_name}",
+        key=f"race_editor_{race_name}_{DATA_FOLDER}",
         use_container_width=True,
     )
 

@@ -55,7 +55,20 @@ def plot_points_over_time(
 
 def main():
     # title
-    selected_season = func.display_header("DF1shboard")
+    title_col, season_col = st.columns([6, 1])
+    with title_col:
+        st.title("DF1shboard")
+    with season_col:
+        saved_seasons = func.list_seasons()
+        selected_season = st.selectbox(
+            "Select Season",
+            saved_seasons,
+            key="select_season",
+            label_visibility="collapsed",
+            disabled=not saved_seasons,
+        )
+
+    DATA_FOLDER = f"./data/{selected_season}"
 
     # Load the races from the CSV file
     try:

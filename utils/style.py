@@ -23,7 +23,7 @@ remove_deploy_button = """
 """
 
 remove_dot_menu = """
-äMainMenu {
+#MainMenu {
     visibility: hidden;
 }
 """

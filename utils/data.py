@@ -171,7 +171,7 @@ def get_races():
     return pd.DataFrame(data)
 
 
-def refactor_df(df: pd.DataFrame):
+def refactor_df(df: pd.DataFrame, datafolder=DATA_FOLDER):
     """assuming df is a race/sprint result table from f1 web: refactor names,columns,types,..."""
     df = df.iloc[:20, :]
     df = df[["Pos", "Driver", "Pts"]]
@@ -185,14 +185,14 @@ def refactor_df(df: pd.DataFrame):
 
     df = df.rename(columns=COL_NAME_MAP)
     df.insert(2, "TeamName", None)
-    drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
+    drivers_df = pd.read_csv(datafolder + "/drivers.csv")
     df = update_teams(df, drivers_df)
 
     return df
 
 
-def save_results_to_csv(data_folder=DATA_FOLDER):
-    os.makedirs(data_folder + "/races", exist_ok=True)
+def save_results_to_csv(datafolder=DATA_FOLDER):
+    os.makedirs(datafolder + "/races", exist_ok=True)
     for location, info in get_locations().items():
         link = info["link"]
 
@@ -200,13 +200,13 @@ def save_results_to_csv(data_folder=DATA_FOLDER):
 
         # Get the race results
         race = get_table(soup)
-        race = refactor_df(race)
-        race.to_csv(f"{DATA_FOLDER}/races/race_{location}.csv", index=False)
+        race = refactor_df(race, datafolder)
+        race.to_csv(f"{datafolder}/races/race_{location}.csv", index=False)
         # Get the sprint results
         sprint = get_sprint(soup)
         if sprint is not None:
-            sprint = refactor_df(sprint)
-            sprint.to_csv(f"{DATA_FOLDER}/races/sprint_{location}.csv", index=False)
+            sprint = refactor_df(sprint, datafolder)
+            sprint.to_csv(f"{datafolder}/races/sprint_{location}.csv", index=False)
 
 
 def get_drivers():
@@ -215,9 +215,10 @@ def get_drivers():
     links = soup.find_all("a", href=True, class_="group")
     links = [link for link in links if "drivers/" in link["href"]]
     for driver in links:
-        first_name = driver.find_all("p")[3].get_text(strip=True)
-        last_name = driver.find_all("p")[4].get_text(strip=True)
-        team_name = driver.find_all("p")[5].get_text(strip=True)
+        ps = driver.find_all("p")
+        first_name = driver.find_all("p")[0].get_text(strip=True)
+        last_name = driver.find_all("p")[1].get_text(strip=True)
+        team_name = driver.find_all("p")[2].get_text(strip=True)
         drivers.append(
             {
                 "DriverName": f"{first_name} {last_name}",

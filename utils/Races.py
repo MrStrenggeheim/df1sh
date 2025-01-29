@@ -2,26 +2,22 @@ import os
 
 import pandas as pd
 import streamlit as st
-import utils.data as data
-import utils.style as style
-
-DATA_FOLDER = "./data"
+from utils import data, style
 
 
-def main(data_folder):
+def main(data_folder, selected_season):
     DATA_FOLDER = data_folder
 
-    st.title("Race Data Configuration")
+    st.title(f"Race Data Configuration - {selected_season}")
 
-    data_editor_nr = st.session_state.setdefault("data_editor_nr", 0)
-    if "races_df" not in st.session_state:
+    races_data_editor_nr = st.session_state.setdefault("races_data_editor_nr", 0)
+    if f"races_df_{DATA_FOLDER}" not in st.session_state:
         if os.path.exists(DATA_FOLDER + "/races.csv"):
-            st.session_state.races_df = pd.read_csv(
+            st.session_state[f"races_df_{DATA_FOLDER}"] = pd.read_csv(
                 DATA_FOLDER + "/races.csv", parse_dates=["StartDate", "EndDate"]
             )
         else:
-            os.makedirs(DATA_FOLDER, exist_ok=True)
-            st.session_state.races_df = pd.DataFrame(
+            st.session_state[f"races_df_{DATA_FOLDER}"] = pd.DataFrame(
                 columns=[
                     "Index",
                     "StartDate",
@@ -35,7 +31,7 @@ def main(data_folder):
 
     st.header("Edit Races")
     races_df = st.data_editor(
-        st.session_state.races_df,
+        st.session_state[f"races_df_{DATA_FOLDER}"],
         num_rows="dynamic",
         use_container_width=True,
         column_config={
@@ -49,7 +45,7 @@ def main(data_folder):
                 "EndDate", required=True, format="YYYY-MM-DD"
             ),
         },
-        key=f"races_editor_{data_editor_nr}",
+        key=f"races_editor_{DATA_FOLDER}_{races_data_editor_nr}",
     )
 
     col1, col2, _ = st.columns([1, 1, 1])
@@ -60,12 +56,12 @@ def main(data_folder):
 
     if save_button:
         races_df.to_csv(DATA_FOLDER + "/races.csv", index=False)
-        st.session_state.races_df = races_df
+        st.session_state[f"races_df_{DATA_FOLDER}"] = races_df
         st.success("Data saved.")
     if fetch_button:
         with st.spinner("Fetching data..."):
-            st.session_state.races_df = data.get_races()
-            st.session_state.data_editor_nr += 1
+            st.session_state[f"races_df_{DATA_FOLDER}"] = data.get_races()
+            st.session_state.races_data_editor_nr += 1
         st.rerun()
 
 
