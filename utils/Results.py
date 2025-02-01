@@ -43,7 +43,10 @@ def main(data_folder, selected_season):
             )
             if st.button("Do it!"):
                 with st.spinner("Fetching Results..."):
-                    data.save_results_to_csv(datafolder=DATA_FOLDER)
+                    data.save_results_to_csv(
+                        datafolder=DATA_FOLDER,
+                        year_to_fetch=st.session_state.year_to_fetch,
+                    )
                     st.rerun()
 
     if race_name is None:

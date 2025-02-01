@@ -50,7 +50,9 @@ def main(data_folder, selected_season):
         st.success("Data saved.")
     if fetch_button:
         with st.spinner("Fetching data..."):
-            st.session_state[f"drivers_df_{DATA_FOLDER}"] = data.get_drivers()
+            st.session_state[f"drivers_df_{DATA_FOLDER}"] = data.get_drivers(
+                year_to_fetch=st.session_state.year_to_fetch
+            )
             st.session_state.drivers_data_editor_nr += 1
         st.rerun()
 

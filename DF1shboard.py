@@ -8,6 +8,7 @@ from utils import data, func, style
 DATA_FOLDER = "./data"
 
 
+@st.cache_data()
 def get_points_over_time(results_df, entity="DriverName"):
     if entity == "DriverName":
         summed_df = results_df.groupby(
@@ -25,6 +26,7 @@ def get_points_over_time(results_df, entity="DriverName"):
     return piv_table
 
 
+@st.cache_data()
 def plot_points_over_time(
     results_df, entity="DriverName", color_map=None, line_dash_sequence=None, **kwargs
 ):
@@ -55,7 +57,7 @@ def plot_points_over_time(
 
 def main():
     # title
-    title_col, season_col = st.columns([6, 1])
+    title_col, season_col = st.columns([5, 1], vertical_alignment="bottom")
     with title_col:
         st.title("DF1shboard")
     with season_col:

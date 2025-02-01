@@ -1,19 +1,21 @@
 import streamlit as st
 
 remove_streamlit_style = """
-div[data-testid="stStatusWidget"] {
-    visibility: hidden;
-    height: 0%;
-    position: fixed;
-}
+<style>
+    div[data-testid="stStatusWidget"] {
+        visibility: hidden;
+        height: 0%;
+        position: fixed;
+    }
 
-#stDecoration {
-    opacity: 0;
-}
-section[data-testid="stSidebar"] {
-    margin-top: -2px;
-    padding-top: 2px;
-}
+    #stDecoration {
+        opacity: 0;
+    }
+    section[data-testid="stSidebar"] {
+        margin-top: -2px;
+        padding-top: 2px;
+    }
+</style>
 """
 
 remove_deploy_button = """
@@ -29,9 +31,11 @@ remove_dot_menu = """
 """
 
 remove_top_margin = """
-#root > dif_nth-child(1) > div > div > div > div > section > div {
-    padding-top: 0;
-}
+<style>
+    .stMainBlockContainer {
+        padding-top: 0;
+    }
+</style>
 """
 
 
@@ -70,6 +74,8 @@ def set_page_config():
     # st.logo("./assets/test.png", size="large")
 
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    st.markdown(remove_streamlit_style, unsafe_allow_html=True)
+    st.markdown(remove_top_margin, unsafe_allow_html=True)
     return None
 
 

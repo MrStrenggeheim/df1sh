@@ -1,16 +1,18 @@
 import os
-import shutil
 
 import streamlit as st
-import yaml
-from utils import Drivers, Races, Results, Teams, func, style
+from utils import Drivers, Races, Results, Teams, data, func, style
 
 DATA_FOLDER = "./data"
 
 
 def main():
-    cfg = yaml.safe_load(open("config.yaml"))
-
+    with st.sidebar:
+        st.selectbox(
+            "Fetch from ...",
+            ["Current"] + data.get_available_years(),
+            key="year_to_fetch",
+        )
     # Ensure the base directory exists
     if not os.path.exists(DATA_FOLDER):
         os.makedirs(DATA_FOLDER)

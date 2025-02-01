@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 from utils import data, style
@@ -19,14 +20,13 @@ def main(data_folder, selected_season):
         else:
             st.session_state[f"races_df_{DATA_FOLDER}"] = pd.DataFrame(
                 columns=[
-                    "Index",
                     "StartDate",
                     "EndDate",
                     "Country",
                     "City",
                     "Circuit",
                     "HasSprint",
-                ]
+                ],
             )
 
     st.header("Edit Races")
@@ -35,14 +35,14 @@ def main(data_folder, selected_season):
         num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "Index": st.column_config.NumberColumn(
-                "Index", required=True, disabled=True, width="small"
-            ),
             "StartDate": st.column_config.DateColumn(
                 "StartDate", required=True, format="YYYY-MM-DD"
             ),
             "EndDate": st.column_config.DateColumn(
                 "EndDate", required=True, format="YYYY-MM-DD"
+            ),
+            "HasSprint": st.column_config.CheckboxColumn(
+                "HasSprint", required=False, width="small"
             ),
         },
         key=f"races_editor_{DATA_FOLDER}_{races_data_editor_nr}",
@@ -53,14 +53,15 @@ def main(data_folder, selected_season):
         save_button = st.button("Save Races to file")
     with col2:
         fetch_button = st.button("Fetch Races from API")
-
     if save_button:
         races_df.to_csv(DATA_FOLDER + "/races.csv", index=False)
         st.session_state[f"races_df_{DATA_FOLDER}"] = races_df
         st.success("Data saved.")
     if fetch_button:
         with st.spinner("Fetching data..."):
-            st.session_state[f"races_df_{DATA_FOLDER}"] = data.get_races()
+            st.session_state[f"races_df_{DATA_FOLDER}"] = data.get_races(
+                year_to_fetch=st.session_state.year_to_fetch
+            )
             st.session_state.races_data_editor_nr += 1
         st.rerun()
 

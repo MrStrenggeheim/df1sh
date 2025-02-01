@@ -17,7 +17,7 @@ def main(data_folder, selected_season):
             )
         else:
             st.session_state[f"teams_df_{DATA_FOLDER}"] = pd.DataFrame(
-                columns=["TeamName", "Color"]
+                columns=["TeamName", "Color"],
             )
 
     st.header("Edit Teams")
@@ -26,6 +26,7 @@ def main(data_folder, selected_season):
         num_rows="dynamic",
         use_container_width=True,
         key=f"teams_editor_{DATA_FOLDER}_{teams_data_editor_nr}",
+        disabled=False,
     )
 
     col1, col2, _ = st.columns([1, 1, 1])
@@ -40,7 +41,9 @@ def main(data_folder, selected_season):
         st.success("Data saved.")
     if fetch_button:
         with st.spinner("Fetching data..."):
-            st.session_state[f"teams_df_{DATA_FOLDER}"] = data.get_teams()
+            st.session_state[f"teams_df_{DATA_FOLDER}"] = data.get_teams(
+                year_to_fetch=st.session_state.year_to_fetch
+            )
             st.session_state.teams_data_editor_nr += 1
         st.rerun()
 
