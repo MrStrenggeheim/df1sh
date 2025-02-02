@@ -119,7 +119,6 @@ def main():
         )
 
     races_df, teams_df, drivers_df, results_df = load_data(selected_season)
-    st.write(results_df)
 
     team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
     drivers_df["Color"] = drivers_df["TeamName"].map(team_to_color)
