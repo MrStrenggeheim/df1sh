@@ -82,10 +82,15 @@ def load_data(selected_season):
         sprint_file = f"{DATA_FOLDER}/races/sprint_{country}.csv"
         try:
             race_df = pd.read_csv(race_file)
-            sprint_df = pd.read_csv(sprint_file) if has_sprint else None
+            if has_sprint:
+                sprint_df = pd.read_csv(sprint_file)
+                sprint_df["FastestLap"] = 0
+            else:
+                sprint_df = None
         except FileNotFoundError:
             race_df = data.RACE_DEFAULT
             sprint_df = data.SPRINT_DEFAULT
+
         df = pd.concat([race_df, sprint_df], axis=0)
         df["Country"] = country
         df["EndDate"] = end_date
@@ -114,6 +119,7 @@ def main():
         )
 
     races_df, teams_df, drivers_df, results_df = load_data(selected_season)
+    st.write(results_df)
 
     team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
     drivers_df["Color"] = drivers_df["TeamName"].map(team_to_color)
@@ -419,6 +425,7 @@ def main():
         values="Points",
         index="DriverName",
         columns="Country",
+        aggfunc="sum",
     )
     piv_table = piv_table.reindex(driver_order, axis=0)
     piv_table = piv_table.reindex(race_names, axis=1)
