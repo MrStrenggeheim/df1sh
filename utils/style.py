@@ -1,5 +1,44 @@
 import streamlit as st
 
+remove_streamlit_style = """
+<style>
+    div[data-testid="stStatusWidget"] {
+        visibility: hidden;
+        height: 0%;
+        position: fixed;
+    }
+
+    #stDecoration {
+        opacity: 0;
+    }
+    section[data-testid="stSidebar"] {
+        margin-top: -2px;
+        padding-top: 2px;
+    }
+</style>
+"""
+
+remove_deploy_button = """
+.stAppDeployButton {
+    visibility: hidden;
+}
+"""
+
+remove_dot_menu = """
+#MainMenu {
+    visibility: hidden;
+}
+"""
+
+remove_top_margin = """
+<style>
+    .stMainBlockContainer {
+        padding-top: 0;
+    }
+</style>
+"""
+
+
 CUSTOM_CSS = """
 <style>
     .message-p {
@@ -35,6 +74,8 @@ def set_page_config():
     # st.logo("./assets/test.png", size="large")
 
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    st.markdown(remove_streamlit_style, unsafe_allow_html=True)
+    st.markdown(remove_top_margin, unsafe_allow_html=True)
     return None
 
 

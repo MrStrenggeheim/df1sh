@@ -6,13 +6,11 @@ from io import StringIO
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, FeatureNotFound
 
 # URL for the F1 results page
 base_url = "https://www.formula1.com"
-results_url = "https://www.formula1.com/en/results/2024/races"
-drivers_url = "https://www.formula1.com/en/drivers"
-team_url = "https://www.formula1.com/en/teams"
+archive_url = "https://www.formula1.com/en/results/"
 
 DATA_FOLDER = "./data"
 
@@ -46,22 +44,25 @@ TEAMS_DTYPES = {
     "Color": str,
 }
 
+RACE_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 RACE_POS = 10
 RACE_DEFAULT = pd.DataFrame(
     {
         "Position": list(range(1, RACE_POS + 1)),
         "DriverName": [None] * RACE_POS,
         "TeamName": [None] * RACE_POS,
-        "Points": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        "Points": RACE_POINTS,
+        "FastestLap": [0] * RACE_POS,
     }
 )
+SPRINT_POINTS = [8, 7, 6, 5, 4, 3, 2, 1]
 SPRINT_POS = 8
 SPRINT_DEFAULT = pd.DataFrame(
     {
         "Position": list(range(1, SPRINT_POS + 1)),
         "DriverName": [None] * SPRINT_POS,
         "TeamName": [None] * SPRINT_POS,
-        "Points": [8, 7, 6, 5, 4, 3, 2, 1],
+        "Points": SPRINT_POINTS,
     }
 )
 
@@ -91,7 +92,10 @@ def get_soup(url):
 
 def get_table(soup):
     table = soup.find(lambda tag: tag.name == "table")
-    table = pd.read_html(StringIO(str(table)))[0]
+    try:
+        table = pd.read_html(StringIO(str(table)))[0]
+    except FeatureNotFound:
+        return None
     return table
 
 
@@ -108,9 +112,12 @@ def get_sprint(soup, only_check=False):
     return None
 
 
-def get_locations():
+def get_locations(year_to_fetch="Current"):
+    if year_to_fetch == "Current":
+        year_to_fetch = str(datetime.now().year)
+    url = archive_url + year_to_fetch + "/races"
     # get all location names and location links from the main page
-    soup = get_soup(results_url)
+    soup = get_soup(url)
     # get all links that contain race-result
     links = soup.find_all("a", href=True, class_="block")
     # get all location names
@@ -129,13 +136,18 @@ def get_locations():
         date = date.get_text(strip=True)
         circuit = circuit.get_text(strip=True)
         circuit, city = circuit.split(", ")
-        start, end = date.split(" - ")
-        end_date = datetime.strptime(end, "%d %b %Y")
-        if len(start.split()) == 1:
-            start = f"{start} {end.split()[-2]} {end.split()[-1]}"
-        elif len(start.split()) == 2:
-            start = f"{start} {end.split()[-1]}"
-        start_date = datetime.strptime(start, "%d %b %Y")
+        split = date.split(" - ")
+        if len(split) == 1:
+            start_date = datetime.strptime(date, "%d %b %Y")
+            end_date = start_date + pd.DateOffset(days=3)
+        else:
+            start, end = date.split(" - ")
+            end_date = datetime.strptime(end, "%d %b %Y")
+            if len(start.split()) == 1:
+                start = f"{start} {end.split()[-2]} {end.split()[-1]}"
+            elif len(start.split()) == 2:
+                start = f"{start} {end.split()[-1]}"
+            start_date = datetime.strptime(start, "%d %b %Y")
         has_sprint = get_sprint(soup) is not None
 
         infos[location] = {
@@ -150,15 +162,14 @@ def get_locations():
     return infos
 
 
-def get_races():
+def get_races(year_to_fetch="Current"):
     """Index,Date,City,Country,HasSprint"""
-    info = get_locations()
+    info = get_locations(year_to_fetch=year_to_fetch)
 
     data = []
-    for i, (location, link) in enumerate(info.items()):
+    for location, link in info.items():
         data.append(
             {
-                "Index": i,
                 "StartDate": link["start_date"],
                 "EndDate": link["end_date"],
                 "Country": location,
@@ -171,7 +182,7 @@ def get_races():
     return pd.DataFrame(data)
 
 
-def refactor_df(df: pd.DataFrame):
+def refactor_df(df: pd.DataFrame, datafolder=DATA_FOLDER):
     """assuming df is a race/sprint result table from f1 web: refactor names,columns,types,..."""
     df = df.iloc[:20, :]
     df = df[["Pos", "Driver", "Pts"]]
@@ -185,62 +196,103 @@ def refactor_df(df: pd.DataFrame):
 
     df = df.rename(columns=COL_NAME_MAP)
     df.insert(2, "TeamName", None)
-    drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
+    drivers_df = pd.read_csv(datafolder + "/drivers.csv")
     df = update_teams(df, drivers_df)
 
     return df
 
 
-def save_results_to_csv():
-    os.makedirs(DATA_FOLDER + "/races", exist_ok=True)
-    for location, info in get_locations().items():
+def save_results_to_csv(datafolder=DATA_FOLDER, year_to_fetch="Current"):
+    os.makedirs(datafolder + "/races", exist_ok=True)
+    for location, info in get_locations(year_to_fetch).items():
         link = info["link"]
 
         soup = get_soup(base_url + link)
 
         # Get the race results
         race = get_table(soup)
-        race = refactor_df(race)
-        race.to_csv(f"{DATA_FOLDER}/races/race_{location}.csv", index=False)
+        if race is None:
+            continue
+        race = refactor_df(race, datafolder)
+        # add fastest lap column
+        race["FastestLap"] = race["Points"].map(
+            lambda pt: pt not in ([0] + RACE_POINTS)
+        )
+        race["Points"] = race["Points"] - race["FastestLap"]
+
+        race.to_csv(f"{datafolder}/races/race_{location}.csv", index=False)
         # Get the sprint results
         sprint = get_sprint(soup)
         if sprint is not None:
-            sprint = refactor_df(sprint)
-            sprint.to_csv(f"{DATA_FOLDER}/races/sprint_{location}.csv", index=False)
+            sprint = refactor_df(sprint, datafolder)
+            sprint.to_csv(f"{datafolder}/races/sprint_{location}.csv", index=False)
 
 
-def get_drivers():
-    drivers = []
-    soup = get_soup(drivers_url)
-    links = soup.find_all("a", href=True, class_="group")
-    links = [link for link in links if "drivers/" in link["href"]]
-    for driver in links:
-        first_name = driver.find_all("p")[3].get_text(strip=True)
-        last_name = driver.find_all("p")[4].get_text(strip=True)
-        team_name = driver.find_all("p")[5].get_text(strip=True)
-        drivers.append(
-            {
-                "DriverName": f"{first_name} {last_name}",
-                "TeamName": team_name,
-            }
-        )
-
-    drivers_df = pd.DataFrame(drivers)
-    return drivers_df
+# print(save_results_to_csv("../data/2024", "2024"))
 
 
-def get_teams():
-    teams = []
-    soup = get_soup(team_url)
-    links = soup.find_all("a", href=True, class_="group")
-    for link in links:
-        name = link.span.get_text(strip=True)
-        color = [
-            "#" + color[-6:]
-            for color in link.div.attrs["class"]
-            if color.startswith("text")
-        ][0]
-        teams.append({"TeamName": name, "Color": color})
+def get_drivers(year_to_fetch="Current"):
+    if year_to_fetch == "Current":
+        drivers = []
+        url = "https://www.formula1.com/en/drivers"
+        soup = get_soup(url)
+        links = soup.find_all("a", href=True, class_="group")
+        links = [link for link in links if "drivers/" in link["href"]]
+        for driver in links:
+            first_name = driver.find_all("p")[0].get_text(strip=True)
+            last_name = driver.find_all("p")[1].get_text(strip=True)
+            team_name = driver.find_all("p")[2].get_text(strip=True)
+            drivers.append(
+                {
+                    "DriverName": f"{first_name} {last_name}",
+                    "TeamName": team_name,
+                }
+            )
+        return pd.DataFrame(drivers)
+    else:
+        url = archive_url + year_to_fetch + "/drivers"
+        df = get_table(get_soup(url))
+        if df is None:
+            return pd.DataFrame()
+        df.rename(columns={"Driver": "DriverName", "Car": "TeamName"}, inplace=True)
+        df["DriverName"] = df["DriverName"].str[:-3]
+        return df[["DriverName", "TeamName"]]
 
-    teams_df = pd.DataFrame(teams)
-    return teams_df
+
+def get_teams(year_to_fetch="Current"):
+    if year_to_fetch == "Current":
+        teams = []
+        url = "https://www.formula1.com/en/teams"
+        soup = get_soup(url)
+        links = soup.find_all("a", href=True, class_="group")
+        for link in links:
+            name = link.span.get_text(strip=True)
+            color = [
+                "#" + color[-6:]
+                for color in link.div.attrs["class"]
+                if color.startswith("text")
+            ][0]
+            teams.append({"TeamName": name, "Color": color})
+
+        teams_df = pd.DataFrame(teams)
+        return teams_df
+    else:
+        url = archive_url + year_to_fetch + "/team"
+        df = get_table(get_soup(url))
+        if df is None:
+            return pd.DataFrame()
+        df.rename(columns={"Team": "TeamName"}, inplace=True)
+        df["Color"] = None
+        return df[["TeamName", "Color"]]
+
+
+def get_available_years():
+    """fetch available years in archive"""
+    soup = get_soup(archive_url)
+    years = soup.find_all("a", class_="block")
+    years = [
+        year.get_text(strip=True)
+        for year in years
+        if year.get_text(strip=True).isnumeric()
+    ]
+    return years
