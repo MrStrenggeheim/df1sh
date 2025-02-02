@@ -96,6 +96,8 @@ def get_table(soup):
         table = pd.read_html(StringIO(str(table)))[0]
     except FeatureNotFound:
         return None
+    except ValueError:  # no tables found
+        return None
     return table
 
 
@@ -204,9 +206,11 @@ def refactor_df(df: pd.DataFrame, datafolder=DATA_FOLDER):
 
 def save_results_to_csv(datafolder=DATA_FOLDER, year_to_fetch="Current"):
     os.makedirs(datafolder + "/races", exist_ok=True)
+    for file in os.listdir(datafolder + "/races"):
+        if file.endswith(".csv"):
+            os.remove(datafolder + "/races/" + file)
     for location, info in get_locations(year_to_fetch).items():
         link = info["link"]
-
         soup = get_soup(base_url + link)
 
         # Get the race results

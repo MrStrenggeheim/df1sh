@@ -13,7 +13,7 @@ def main(data_folder, selected_season):
     if f"teams_df_{DATA_FOLDER}" not in st.session_state:
         if os.path.exists(DATA_FOLDER + "/teams.csv"):
             st.session_state[f"teams_df_{DATA_FOLDER}"] = pd.read_csv(
-                DATA_FOLDER + "/teams.csv"
+                DATA_FOLDER + "/teams.csv", dtype={"TeamName": str, "Color": str}
             )
         else:
             st.session_state[f"teams_df_{DATA_FOLDER}"] = pd.DataFrame(
