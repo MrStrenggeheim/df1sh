@@ -89,7 +89,7 @@ def main(data_folder, selected_season):
             "Points": st.column_config.NumberColumn(
                 "Points",
                 required=True,
-                disabled=True,
+                disabled=False,
                 width="small",
             ),
             "FastestLap": st.column_config.CheckboxColumn(
