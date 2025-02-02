@@ -25,7 +25,7 @@ def get_points_over_time(results_df, entity="DriverName"):
     )
 
     piv_table = summed_df.pivot_table(["Points"], ["Country"], [entity], sort=False)
-    piv_table = piv_table.fillna(0).cumsum(axis=0)
+    piv_table = piv_table.astype(float).fillna(0).cumsum(axis=0)
     piv_table = piv_table.stack(future_stack=True).reset_index()
     return piv_table
 
@@ -93,9 +93,7 @@ def load_data(selected_season):
 
     # FIXME type conversion stuff
     results_df["Points"] = results_df["Points"].astype(int)
-    print(results_df["FastestLap"])
     results_df["Points"] = results_df["Points"] + results_df["FastestLap"]
-    print(results_df["Points"])
     results_df["EndDate"] = pd.to_datetime(results_df["EndDate"]).dt.date
 
     return races_df, teams_df, drivers_df, results_df
@@ -412,6 +410,31 @@ def main():
         margin=dict(l=0, r=0, t=0, b=0),
     )
     st.plotly_chart(fig)
+
+    # Debug Pivot Table ############################################################
+    # make pivot of y=driver x=country with points
+    st.header("Driver Points Heatmap")
+    driver_order = drivers_df["DriverName"].tolist()
+    piv_table = results_df.pivot_table(
+        values="Points",
+        index="DriverName",
+        columns="Country",
+    )
+    piv_table = piv_table.reindex(driver_order, axis=0)
+    piv_table = piv_table.reindex(race_names, axis=1)
+    piv_table = piv_table.astype(float).fillna(0)
+    # make heatmap with points displayed
+    fig = px.imshow(
+        piv_table,
+        color_continuous_scale=["#0e1117", "#ff4b4b"],
+        labels=dict(x="Country", y="Driver", color="Points"),
+        text_auto=True,
+        aspect="auto",
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 
 if __name__ == "__main__":

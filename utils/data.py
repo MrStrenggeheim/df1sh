@@ -194,7 +194,7 @@ def refactor_df(df: pd.DataFrame, datafolder=DATA_FOLDER):
 
     df["Pos"] = df["Pos"].astype(int)
     df["Driver"] = df["Driver"].str[:-3]
-    df["Pts"] = df["Pts"].astype(int)
+    df["Pts"] = pd.to_numeric(df["Pts"])
 
     df = df.rename(columns=COL_NAME_MAP)
     df.insert(2, "TeamName", None)
