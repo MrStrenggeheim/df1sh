@@ -82,9 +82,11 @@ def load_data(selected_season):
         sprint_file = f"{DATA_FOLDER}/races/sprint_{country}.csv"
         try:
             race_df = pd.read_csv(race_file)
+            race_df["Sprint"] = False
             if has_sprint:
                 sprint_df = pd.read_csv(sprint_file)
                 sprint_df["FastestLap"] = 0
+                sprint_df["Sprint"] = True
             else:
                 sprint_df = None
         except FileNotFoundError:
@@ -119,6 +121,7 @@ def main():
         )
 
     races_df, teams_df, drivers_df, results_df = load_data(selected_season)
+    # st.write(results_df)
 
     team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
     drivers_df["Color"] = drivers_df["TeamName"].map(team_to_color)
@@ -272,12 +275,14 @@ def main():
         last_n = st.select_slider(
             "Predict on last n races", options=np.arange(len(piv) + 1), value=0
         )
-        st.write(max(1, len(race_names) - len(piv) + 2))
-        next_n = st.select_slider(
-            "Predict next n races",
-            options=np.arange(0, max(2, len(race_names) - len(piv) + 2)),
-            value=0,
-        )
+        if (max_pred := max(1, len(race_names) - len(piv) + 2)) > 1:
+            next_n = st.select_slider(
+                "Predict next n races",
+                options=np.arange(0, max_pred),
+                value=0,
+            )
+        else:
+            next_n = 0
 
         total_n = len(piv)
         X_total = np.arange(total_n).reshape(-1, 1)
@@ -400,47 +405,90 @@ def main():
         st.plotly_chart(fig)
 
     # Heatmap for positions ############################################################
-    st.header("Position Heatmap")
-    positions_df = results_df[["DriverName", "Position"]]
-    positions_df = positions_df.groupby("DriverName")["Position"].value_counts()
-    positions_df = positions_df.unstack().fillna(0).astype(int)
-    # sort drivers by drivernames
-    positions_df = positions_df.reindex(driver_names)
-    fig = px.imshow(
-        positions_df,
-        color_continuous_scale=["#0e1117", "#ff4b4b"],
-        labels=dict(x="Position", y="Driver", color="Count"),
-    )
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-    st.plotly_chart(fig)
+    cols = st.columns([1, 5])
+    with cols[0]:
+        st.header("Position Heatmap")
+        entity = st.radio(
+            "Entity 1",
+            ["DriverName", "TeamName"],
+            label_visibility="collapsed",
+        )
+        sprint = st.radio(
+            "Select Race Type 1",
+            ["Race", "Sprint", "Both"],
+            label_visibility="collapsed",
+        )
+        show_values = st.toggle("Show Values 1", value=False)
+    with cols[1]:
+        if sprint == "Race":
+            positions_df = results_df[results_df["Sprint"] == False]
+        elif sprint == "Sprint":
+            positions_df = results_df[results_df["Sprint"] == True]
+        else:
+            positions_df = results_df
+        positions_df = positions_df[[entity, "Position"]]
+        positions_df = positions_df.groupby(entity)["Position"].value_counts()
+        positions_df = positions_df.unstack().fillna(0)
+        order = driver_names if entity == "DriverName" else team_names
+        positions_df = positions_df.reindex(order).fillna(0)
+        fig = px.imshow(
+            positions_df,
+            color_continuous_scale=["#0e1117", "#ff4b4b"],
+            labels=dict(x="Position", y=entity, color="Count"),
+            text_auto=show_values,
+        )
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=50, b=0),
+            height=500,
+        )
+        st.plotly_chart(fig)
 
     # Debug Pivot Table ############################################################
     # make pivot of y=driver x=country with points
-    st.header("Driver Points Heatmap")
-    driver_order = drivers_df["DriverName"].tolist()
-    piv_table = results_df.pivot_table(
-        values="Points",
-        index="DriverName",
-        columns="Country",
-        aggfunc="sum",
-    )
-    piv_table = piv_table.reindex(driver_order, axis=0)
-    piv_table = piv_table.reindex(race_names, axis=1)
-    piv_table = piv_table.astype(float).fillna(0)
-    # make heatmap with points displayed
-    fig = px.imshow(
-        piv_table,
-        color_continuous_scale=["#0e1117", "#ff4b4b"],
-        labels=dict(x="Country", y="Driver", color="Points"),
-        text_auto=True,
-        aspect="auto",
-    )
-    fig.update_layout(
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    cols = st.columns([1, 5])
+    with cols[0]:
+        st.header("Points Heatmap")
+        entity = st.radio(
+            "Entity 2",
+            ["DriverName", "TeamName"],
+            label_visibility="collapsed",
+        )
+        sprint = st.radio(
+            "Select Race Type 2",
+            ["Race", "Sprint", "Both"],
+            label_visibility="collapsed",
+        )
+        show_values = st.toggle("Show Values 2", value=False)
+    with cols[1]:
+        if sprint == "Race":
+            piv_table = results_df[results_df["Sprint"] == False]
+        elif sprint == "Sprint":
+            piv_table = results_df[results_df["Sprint"] == True]
+        else:
+            piv_table = results_df
+        piv_table = piv_table.pivot_table(
+            values="Points",
+            index=entity,
+            columns="Country",
+            aggfunc="sum",
+        )
+        order = driver_names if entity == "DriverName" else team_names
+        piv_table = piv_table.reindex(order, axis=0)
+        piv_table = piv_table.reindex(race_names, axis=1)
+        piv_table = piv_table.astype(float).fillna(0)
+        # make heatmap with points displayed
+        fig = px.imshow(
+            piv_table,
+            color_continuous_scale=["#0e1117", "#ff4b4b"],
+            labels=dict(x="Country", y=entity, color="Points"),
+            text_auto=show_values,
+            aspect="auto",
+        )
+        fig.update_layout(
+            margin=dict(l=0, r=0, t=50, b=0),
+            height=500,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 
 if __name__ == "__main__":
