@@ -15,7 +15,9 @@ def main(data_folder, selected_season):
     if f"races_df_{DATA_FOLDER}" not in st.session_state:
         if os.path.exists(DATA_FOLDER + "/races.csv"):
             st.session_state[f"races_df_{DATA_FOLDER}"] = pd.read_csv(
-                DATA_FOLDER + "/races.csv", parse_dates=["StartDate", "EndDate"]
+                DATA_FOLDER + "/races.csv",
+                parse_dates=["StartDate", "EndDate"],
+                dtype={"Country": str, "City": str, "Circuit": str, "HasSprint": bool},
             )
         else:
             st.session_state[f"races_df_{DATA_FOLDER}"] = pd.DataFrame(

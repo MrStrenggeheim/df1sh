@@ -125,7 +125,7 @@ def main(data_folder, selected_season):
                     help="Leave empty to auto-fill with default team",
                 ),
                 "Points": st.column_config.NumberColumn(
-                    "Points", required=True, disabled=True, width="small"
+                    "Points", required=True, disabled=False, width="small"
                 ),
             },
             hide_index=True,
