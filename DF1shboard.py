@@ -8,7 +8,11 @@ from utils import data, func, style
 DATA_FOLDER = "./data"
 
 
-@st.cache_data()
+def short_legend(name):
+    return name[:15] + "..." if len(name) > 15 else name
+
+
+# @st.cache_data()
 def get_points_over_time(results_df, entity="DriverName"):
     if entity == "DriverName":
         summed_df = results_df.groupby(
@@ -27,9 +31,7 @@ def get_points_over_time(results_df, entity="DriverName"):
 
 
 @st.cache_data()
-def plot_points_over_time(
-    results_df, entity="DriverName", color_map=None, line_dash_sequence=None, **kwargs
-):
+def plot_points_over_time(results_df, entity="DriverName", **kwargs):
     piv_table = get_points_over_time(results_df, entity=entity)
     fig = px.line(
         piv_table,
@@ -37,9 +39,7 @@ def plot_points_over_time(
         y="Points",
         line_group=entity,
         color=entity,
-        color_discrete_map=color_map,
         line_dash=entity,
-        line_dash_sequence=line_dash_sequence,
         **kwargs,
     )
     fig.update_layout(
@@ -48,51 +48,33 @@ def plot_points_over_time(
     )
     fig.for_each_trace(
         lambda trace: trace.update(
-            name=trace.name[:15] + "..." if len(trace.name) > 15 else trace.name
+            name=short_legend(trace.name),
         )
     )
 
     return fig
 
 
-def main():
-    # title
-    title_col, season_col = st.columns([5, 1], vertical_alignment="bottom")
-    with title_col:
-        st.title("DF1shboard")
-    with season_col:
-        saved_seasons = func.list_seasons()
-        selected_season = st.selectbox(
-            "Select Season",
-            saved_seasons,
-            key="select_season",
-            label_visibility="collapsed",
-            disabled=not saved_seasons,
-        )
-
+@st.cache_data()
+def load_data(selected_season):
     DATA_FOLDER = f"./data/{selected_season}"
 
     # Load the races from the CSV file
     try:
-        races_df = pd.read_csv(DATA_FOLDER + "/races.csv")
+        races_df = pd.read_csv(
+            DATA_FOLDER + "/races.csv",
+            parse_dates=["StartDate", "EndDate"],
+        )
         drivers_df = pd.read_csv(DATA_FOLDER + "/drivers.csv")
         teams_df = pd.read_csv(DATA_FOLDER + "/teams.csv")
     except FileNotFoundError:
         st.warning("Data not found. Please configure the data in apropiate tabs.")
         st.stop()
-    races_df["StartDate"] = pd.to_datetime(races_df["StartDate"]).apply(
-        lambda x: x.date()
-    )
-    race_names = races_df["Country"].tolist()
+    races_df["StartDate"] = pd.to_datetime(races_df["StartDate"]).dt.date
+    races_df["EndDate"] = pd.to_datetime(races_df["EndDate"]).dt.date
+
+    # Load the results from the CSV file
     results_df = pd.DataFrame()
-
-    # to get colormap: match driver with team wehere color is a column
-    team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
-    driver_to_team = drivers_df.set_index("DriverName")["TeamName"].to_dict()
-    driver_to_color = {
-        driver: team_to_color[team] for driver, team in driver_to_team.items()
-    }
-
     for country, has_sprint, end_date in races_df[
         ["Country", "HasSprint", "EndDate"]
     ].values:
@@ -109,10 +91,45 @@ def main():
         df["EndDate"] = end_date
         results_df = pd.concat([results_df, df], axis=0) if not results_df.empty else df
 
+    # FIXME type conversion stuff
     results_df["Points"] = results_df["Points"].astype(int)
-    results_df["EndDate"] = pd.to_datetime(results_df["EndDate"]).apply(
-        lambda x: x.date()
+    print(results_df["FastestLap"])
+    results_df["Points"] = results_df["Points"] + results_df["FastestLap"]
+    print(results_df["Points"])
+    results_df["EndDate"] = pd.to_datetime(results_df["EndDate"]).dt.date
+
+    return races_df, teams_df, drivers_df, results_df
+
+
+def main():
+    title_col, season_col = st.columns([5, 1], vertical_alignment="bottom")
+    with title_col:
+        st.title("DF1shboard")
+    with season_col:
+        saved_seasons = func.list_seasons()
+        selected_season = st.selectbox(
+            "Select Season",
+            saved_seasons,
+            key="select_season",
+            label_visibility="collapsed",
+            disabled=not saved_seasons,
+        )
+
+    races_df, teams_df, drivers_df, results_df = load_data(selected_season)
+
+    team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
+    drivers_df["Color"] = drivers_df["TeamName"].map(team_to_color)
+    line_styles = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
+    drivers_df["LineStyle"] = (
+        drivers_df.groupby("TeamName")
+        .cumcount()
+        .apply(lambda nr: line_styles[nr % len(line_styles)])
     )
+    race_names = races_df["Country"].tolist()
+    driver_points_sum = results_df.groupby("DriverName")["Points"].sum()
+    driver_names = driver_points_sum.sort_values(ascending=False).index
+    team_points_sum = results_df.groupby("TeamName")["Points"].sum()
+    team_names = team_points_sum.sort_values(ascending=False).index
 
     # START ############################################################
     today = pd.to_datetime("today").date()
@@ -129,14 +146,15 @@ def main():
         )
 
     # FILTER ############################################################
-    driver_names = drivers_df["DriverName"].unique()
-    driver_names.sort()
+
     start_points = pd.DataFrame(
         {
-            "Country": [""] * len(driver_names),
-            "EndDate": pd.to_datetime("2021-01-01").date(),
-            "DriverName": driver_names,
-            "TeamName": [driver_to_team[driver] for driver in driver_names],
+            "Country": "",
+            "EndDate": pd.to_datetime(
+                f"{races_df["StartDate"].min().year}-01-01"
+            ).date(),
+            "DriverName": drivers_df["DriverName"],
+            "TeamName": drivers_df["TeamName"],
             "Points": 0,
         }
     )
@@ -158,15 +176,21 @@ def main():
     results_df = results_df[results_df["Country"].isin(filtered_countries)]
 
     # team name filter, multi select
-    team_names = teams_df["TeamName"].unique()
-    team_names.sort()
-    selected_teams = st.multiselect(
-        "Select Teams",
-        options=team_names,
-        default=team_names,
-        label_visibility="collapsed",
-    )
-    results_df = results_df[results_df["TeamName"].isin(selected_teams)]
+    col1, col2 = st.columns([1, 100], vertical_alignment="center", gap="medium")
+    with col1:
+        filter_by_team = st.checkbox(
+            "Team Filter", value=False, label_visibility="collapsed"
+        )
+    with col2:
+        selected_teams = st.multiselect(
+            "Select Teams",
+            options=team_names,
+            default=team_names,
+            label_visibility="collapsed",
+            disabled=not filter_by_team,
+        )
+    if filter_by_team and selected_teams:
+        results_df = results_df[results_df["TeamName"].isin(selected_teams)]
 
     # PLOT ############################################################
 
@@ -175,17 +199,19 @@ def main():
     driver_point_over_time_graph = plot_points_over_time(
         results_df,
         entity="DriverName",
-        color_map=driver_to_color,
-        line_dash_sequence=["solid", "dot"],
+        color_discrete_map=drivers_df.set_index("DriverName")["Color"].to_dict(),
+        line_dash_map=drivers_df.set_index("DriverName")["LineStyle"].to_dict(),
         title="Driver Points Over Time",
+        category_orders={"DriverName": list(driver_names)},
     )
 
     team_points_over_time_grpah = plot_points_over_time(
         results_df,
         entity="TeamName",
-        color_map=team_to_color,
+        color_discrete_map=team_to_color,
         line_dash_sequence=["solid"],
         title="Team Points Over Time",
+        category_orders={"TeamName": list(team_names)},
     )
 
     cols[0].plotly_chart(driver_point_over_time_graph)
@@ -219,7 +245,9 @@ def main():
             index=options.tolist().index(max_entity),
             label_visibility="collapsed",
         )
-        driver2 = st.selectbox("Select 2", options, label_visibility="collapsed")
+        driver2 = st.selectbox(
+            "Select 2", options, label_visibility="collapsed", index=1
+        )
 
         points_over_time = points_over_time[
             points_over_time[entity].isin([driver1, driver2])
@@ -314,6 +342,76 @@ def main():
                 line_width=0,
             )
         st.plotly_chart(driver_diff_graph)
+
+    cols = st.columns([4, 2])
+    # Driver points ############################################################
+    with cols[0]:
+        st.header("Driver Points")
+        agg_method = st.radio(
+            "Driver Calculation",
+            ["mean", "sum"],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        avg_points = (
+            results_df.groupby("DriverName")["Points"]
+            .agg(agg_method)
+            .round(2)
+            .reset_index()
+        )
+        avg_points = avg_points.sort_values(by="Points", ascending=False)
+        avg_points["DriverName"] = avg_points["DriverName"].apply(short_legend)
+        fig = px.bar(
+            avg_points,
+            x="DriverName",
+            y="Points",
+            color_discrete_sequence=["#b73a3a"],
+        )
+        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig)
+
+    # Team points ############################################################
+    with cols[1]:
+        st.header("Team Points")
+        agg_method = st.radio(
+            "Team Calculation",
+            ["mean", "sum"],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        avg_points = (
+            results_df.groupby("TeamName")["Points"]
+            .agg(agg_method)
+            .round(2)
+            .reset_index()
+        )
+        avg_points = avg_points.sort_values(by="Points", ascending=False)
+        avg_points["TeamName"] = avg_points["TeamName"].apply(short_legend)
+        fig = px.bar(
+            avg_points,
+            x="TeamName",
+            y="Points",
+            color_discrete_sequence=["#b73a3a"],
+        )
+        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig)
+
+    # Heatmap for positions ############################################################
+    st.header("Position Heatmap")
+    positions_df = results_df[["DriverName", "Position"]]
+    positions_df = positions_df.groupby("DriverName")["Position"].value_counts()
+    positions_df = positions_df.unstack().fillna(0).astype(int)
+    # sort drivers by drivernames
+    positions_df = positions_df.reindex(driver_names)
+    fig = px.imshow(
+        positions_df,
+        color_continuous_scale=["#0e1117", "#ff4b4b"],
+        labels=dict(x="Position", y="Driver", color="Count"),
+    )
+    fig.update_layout(
+        margin=dict(l=0, r=0, t=0, b=0),
+    )
+    st.plotly_chart(fig)
 
 
 if __name__ == "__main__":

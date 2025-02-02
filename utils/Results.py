@@ -55,7 +55,6 @@ def main(data_folder, selected_season):
     has_sprint = races_df["HasSprint"][race_names.index(race_name)]
     race_file = f"{DATA_FOLDER}/races/race_{race_name}.csv"
     sprint_file = f"{DATA_FOLDER}/races/sprint_{race_name}.csv"
-    # fastest_file = f"{DATA_FOLDER}/races/fastest_laps.csv"
 
     if os.path.exists(race_file):
         race_df = pd.read_csv(
@@ -67,12 +66,6 @@ def main(data_folder, selected_season):
         sprint_df = pd.read_csv(sprint_file)
     else:
         sprint_df = data.SPRINT_DEFAULT
-    # if os.path.exists(fastest_file):
-    #     fastest_df = pd.read_csv(
-    #         fastest_file, index_col=0, dtype=str, keep_default_na=False
-    #     )
-    # else:
-    #     fastest_df = FASTEST_DEFAULT
 
     st.header(f"Results for {race_name}")
     race_df_edit = st.data_editor(
@@ -86,47 +79,30 @@ def main(data_folder, selected_season):
             "DriverName": st.column_config.SelectboxColumn(
                 "DriverName",
                 options=drivers_df["DriverName"].tolist(),
-                # required=True,
             ),
             # team is a selectbox of teams_df["Team"].tolist() but defaults to the team of the selected driver
             "TeamName": st.column_config.SelectboxColumn(
                 "TeamName",
                 options=teams_df["TeamName"].tolist(),
-                required=False,
                 help="Leave empty to auto-fill with default team",
             ),
             "Points": st.column_config.NumberColumn(
                 "Points",
                 required=True,
-                disabled=False,
+                disabled=True,
                 width="small",
-                help="Manually add 1 here for fastest lap",
+            ),
+            "FastestLap": st.column_config.CheckboxColumn(
+                "FastestLap",
+                required=False,
+                width="small",
+                help="Check if this driver has the fastest lap",
             ),
         },
         hide_index=True,
         key=f"race_editor_{race_name}_{DATA_FOLDER}",
         use_container_width=True,
     )
-
-    # if race_name not in fastest_df.index:
-    #     fastest_df_idx = None
-    # else:
-    #     fastest_df_name = fastest_df.loc[race_name]["DriverName"]
-    #     fastest_df_idx = (
-    #         drivers_df["DriverName"].tolist().index(fastest_df_name) + 1
-    #         if fastest_df_name
-    #         else None
-    #     )
-    # fastest_lap = st.selectbox(
-    #     "keck",
-    #     placeholder="Fastest Lap",
-    #     label_visibility="collapsed",
-    #     options=[""] + drivers_df["DriverName"].tolist() + [None],
-    #     index=fastest_df_idx,
-    #     key=f"fastest_{race_name}",
-    #     help="Adds 1 point to selected driver",
-    # )
-    # fastest_df.loc[race_name] = fastest_lap
 
     if has_sprint:
         st.header(f"Sprint")

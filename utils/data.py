@@ -44,22 +44,25 @@ TEAMS_DTYPES = {
     "Color": str,
 }
 
+RACE_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
 RACE_POS = 10
 RACE_DEFAULT = pd.DataFrame(
     {
         "Position": list(range(1, RACE_POS + 1)),
         "DriverName": [None] * RACE_POS,
         "TeamName": [None] * RACE_POS,
-        "Points": [25, 18, 15, 12, 10, 8, 6, 4, 2, 1],
+        "Points": RACE_POINTS,
+        "FastestLap": [0] * RACE_POS,
     }
 )
+SPRINT_POINTS = [8, 7, 6, 5, 4, 3, 2, 1]
 SPRINT_POS = 8
 SPRINT_DEFAULT = pd.DataFrame(
     {
         "Position": list(range(1, SPRINT_POS + 1)),
         "DriverName": [None] * SPRINT_POS,
         "TeamName": [None] * SPRINT_POS,
-        "Points": [8, 7, 6, 5, 4, 3, 2, 1],
+        "Points": SPRINT_POINTS,
     }
 )
 
@@ -211,6 +214,12 @@ def save_results_to_csv(datafolder=DATA_FOLDER, year_to_fetch="Current"):
         if race is None:
             continue
         race = refactor_df(race, datafolder)
+        # add fastest lap column
+        race["FastestLap"] = race["Points"].map(
+            lambda pt: pt not in ([0] + RACE_POINTS)
+        )
+        race["Points"] = race["Points"] - race["FastestLap"]
+
         race.to_csv(f"{datafolder}/races/race_{location}.csv", index=False)
         # Get the sprint results
         sprint = get_sprint(soup)
