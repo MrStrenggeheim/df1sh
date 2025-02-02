@@ -92,7 +92,7 @@ def load_data(selected_season):
         results_df = pd.concat([results_df, df], axis=0) if not results_df.empty else df
 
     # FIXME type conversion stuff
-    results_df["Points"] = results_df["Points"].astype(int)
+    results_df["Points"] = results_df["Points"].astype(float)
     results_df["Points"] = results_df["Points"] + results_df["FastestLap"]
     results_df["EndDate"] = pd.to_datetime(results_df["EndDate"]).dt.date
 
