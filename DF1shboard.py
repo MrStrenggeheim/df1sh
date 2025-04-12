@@ -3,11 +3,13 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from sklearn import svm
+import toml
 
 from utils import data, func, style
 
-DATA_FOLDER = "./data"
-
+# Load settings from the settings.toml file
+settings = func.read_settings()
+DATA_FOLDER = settings["dashboard"].get("data_folder", f"./data/")
 
 def short_legend(name):
     return name[:15] + "..." if len(name) > 15 else name
@@ -111,8 +113,12 @@ def main():
     title_col, season_col = st.columns([5, 1], vertical_alignment="bottom")
     with title_col:
         st.title("DF1shboard")
-    with season_col:
+    try:
         saved_seasons = func.list_seasons()
+    except FileNotFoundError:
+        st.warning("No seasons found. Please configure the data in Config tab.")
+        st.stop()
+    with season_col:
         selected_season = st.selectbox(
             "Select Season",
             saved_seasons,
@@ -122,7 +128,6 @@ def main():
         )
 
     races_df, teams_df, drivers_df, results_df = load_data(selected_season)
-    # st.write(results_df)
 
     team_to_color = teams_df.set_index("TeamName")["Color"].to_dict()
     drivers_df["Color"] = drivers_df["TeamName"].map(team_to_color)
@@ -152,7 +157,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-    # FILTER ############################################################
 
     start_points = pd.DataFrame(
         {
@@ -167,6 +171,7 @@ def main():
     )
     results_df = pd.concat([start_points, results_df], axis=0)
 
+    # FILTER ############################################################
     # two slide slider for the range
     season_start, season_end = st.sidebar.select_slider(
         "Season Range",
@@ -183,12 +188,13 @@ def main():
     results_df = results_df[results_df["Country"].isin(filtered_countries)]
 
     # team name filter, multi select
-    col1, col2 = st.columns([1, 100], vertical_alignment="center", gap="medium")
-    with col1:
+    with st.sidebar:#.expander("Filter", expanded=True):
+        # col1, col2 = st.columns([1, 100], vertical_alignment="center", gap="medium")
+        # with col1:
         filter_by_team = st.checkbox(
-            "Team Filter", value=False, label_visibility="collapsed"
+            "Team Filter", value=False, #label_visibility="collapsed"
         )
-    with col2:
+        # with col2:
         selected_teams = st.multiselect(
             "Select Teams",
             options=team_names,
@@ -196,8 +202,13 @@ def main():
             label_visibility="collapsed",
             disabled=not filter_by_team,
         )
-    if filter_by_team and selected_teams:
-        results_df = results_df[results_df["TeamName"].isin(selected_teams)]
+        if filter_by_team and selected_teams:
+            results_df = results_df[results_df["TeamName"].isin(selected_teams)]
+            
+            
+    # reassign team names to the filtered teams
+    team_names = results_df["TeamName"].unique()
+    driver_names = results_df["DriverName"].unique()
 
     # PLOT ############################################################
 

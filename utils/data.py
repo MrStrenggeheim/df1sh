@@ -117,6 +117,7 @@ def get_sprint(soup, only_check=False):
 def get_locations(year_to_fetch="Current"):
     if year_to_fetch == "Current":
         year_to_fetch = str(datetime.now().year)
+        # new feature: from https://www.formula1.com/en/racing/2025
     url = archive_url + year_to_fetch + "/races"
     # get all location names and location links from the main page
     soup = get_soup(url)

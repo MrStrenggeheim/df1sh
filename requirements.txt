@@ -3,4 +3,5 @@ plotly
 streamlit
 beautifulsoup4
 requests
-txml
+lxml
+html5lib

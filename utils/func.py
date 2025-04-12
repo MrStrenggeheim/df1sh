@@ -1,10 +1,29 @@
 import os
 import shutil
+import toml
 
 import streamlit as st
 
-DATA_FOLDER = "./data"
+# DATA_FOLDER = settings["dashboard"].get("data_folder", f"./data/")
+SETTINGS_FILE = "settings.toml"
 
+def read_settings():
+    try:
+        settings = toml.load(SETTINGS_FILE)
+    except FileNotFoundError:
+        # Create a default settings file if it doesn't exist
+        default_settings = {
+            "dashboard": {
+                "data_folder": "./data/"
+            }
+        }
+        with open(SETTINGS_FILE, "w") as f:
+            toml.dump(default_settings, f)
+        settings = default_settings
+    return settings
+
+settings = read_settings()
+DATA_FOLDER = settings["dashboard"].get("data_folder", "./data/")
 
 def submit():
     st.session_state.current_season = st.session_state.new_season_input

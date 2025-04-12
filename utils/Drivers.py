@@ -32,7 +32,7 @@ def main(data_folder, selected_season):
         use_container_width=True,
         column_config={
             "TeamName": st.column_config.SelectboxColumn(
-                "TeamName", options=df_teams["TeamName"].tolist(), required=True
+                "TeamName", options=sorted(df_teams["TeamName"].tolist()), required=True
             ),
         },
         key=f"driver_editor_{DATA_FOLDER}_{drivers_data_editor_nr}",
