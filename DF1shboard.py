@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from sklearn import svm
+
 from utils import data, func, style
 
 DATA_FOLDER = "./data"
@@ -431,6 +432,7 @@ def main():
         positions_df = positions_df.unstack().fillna(0)
         order = driver_names if entity == "DriverName" else team_names
         positions_df = positions_df.reindex(order).fillna(0)
+        # FIXME: layout is completely off when driver-team pair is missing in data
         fig = px.imshow(
             positions_df,
             color_continuous_scale=["#0e1117", "#ff4b4b"],
