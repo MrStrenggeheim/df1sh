@@ -1,7 +1,17 @@
 # df1sh
 A simple dashboard to follow the formula 1 scores.
 
-![DF1shboard](assets/showcase.png)
+All points per Driver and Team at one glance!
+![Scores](assets/scores.png)
+
+Compare the two best players or teams!
+![Comparison](assets/comp.png)
+
+Aggregated Point Summary!
+![points](assets/points.png)
+
+And Heatmaps!
+![heatmap](assets/heatmap.png)
 
 ## Usage
 
